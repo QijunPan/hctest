@@ -1,0 +1,224 @@
+---
+
+- name: config leaf
+  hosts: leaf1 leaf2
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
+  tasks:
+  - name: "set underlay interface layer3"
+    ce_interface:
+      interface: "{{ if2spine }}"
+      mode: "layer3"
+      state: present
+      provider: "{{ cli }}"
+
+  - name: "set underlay interface ip address"
+    ce_ip_interface:
+      interface: "{{ if2spine }}"
+      addr: "{{ if2spine_addr }}"
+      mask: "{{ if2spine_mask }}"
+      state: present
+      version: v4
+      provider: "{{ cli }}"
+  
+  - name: "create loopback interface"
+    ce_interface:
+      interface: "{{ if_loopback }}"
+      state: present
+      provider: "{{ cli }}"
+
+  - name: "set loopback ip address"
+    ce_ip_interface:
+      interface: "{{ if_loopback }}"
+      addr: "{{ if_loopback_addr }}"
+      mask: "{{ if_loopback_mask }}"
+      state: present
+      version: v4
+      provider: "{{ cli }}"
+
+  - name: "set ospf"
+    ce_ospf:
+      process_id: "{{ ospf_process }}"
+      area: "{{ ospf_area }}"
+      addr: "{{ item.addr }}"
+      mask: "{{ item.mask }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { addr: "{{ ospf_addr1 }}", mask: "{{ ospf_addr1_mask }}" }
+      - { addr: "{{ ospf_addr2 }}", mask: "{{ ospf_addr2_mask }}" }
+  
+  - name: "create bridge-domain"
+    ce_vxlan_global:
+      bridge_domain_id: "{{ item.bd_id }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { bd_id: "{{ bd_id1 }}" }
+      - { bd_id: "{{ bd_id2 }}" }
+
+  - name: "create Nve interface"
+    ce_interface:
+      interface: "{{ if_nve }}"
+      state: present
+      provider: "{{ cli }}"
+  
+  - name: "set vxlan tunnel"
+    ce_vxlan_tunnel:
+      nve_name: "{{ if_nve }}"
+      source_ip: "{{ if_nve_source }}"
+      vni_id: "{{ item.vni }}"
+      protocol_type: bgp
+      bridge_domain_id: "{{ item.bd_id }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { vni: "{{ vni1 }}", bd_id: "{{ bd_id1 }}" }
+      - { vni: "{{ vni2 }}", bd_id: "{{ bd_id2 }}" }
+
+  - name: "create l2 sub-interface"
+    ce_interface:
+      interface: "{{ item.interface }}"
+      l2sub: true
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { interface: "{{ if_l2sub1 }}" }
+      - { interface: "{{ if_l2sub2 }}" }
+  
+  - name: "set vlxan virtual access point"
+    ce_vxlan_vap:
+      l2_sub_interface: "{{ item.interface }}"
+      encapsulation: "{{ item.encap }}"
+      ce_vid: "{{ item.cvid }}"
+      bridge_domain_id: "{{ item.bd_id }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { interface: "{{ if_l2sub1 }}", encap: "{{ if_l2sub1_encap }}", cvid: "{{ if_l2sub1_cvid }}", bd_id: "{{ bd_id1 }}" }
+      - { interface: "{{ if_l2sub2 }}", encap: "{{ if_l2sub2_encap }}", cvid: "{{ if_l2sub2_cvid }}", bd_id: "{{ bd_id2 }}" }
+
+  - name: "set evpn-overlay enable"
+    ce_evpn_global:
+      evpn_overlay_enable: enable
+      provider: "{{ cli }}"
+
+  - name: "set bgp"
+    ce_bgp:
+      as_number: "{{ bgp_as_number }}"
+      state: present
+      provider: "{{ cli }}"
+
+  - name: "set bgp neighbor"
+    ce_bgp_neighbor:
+      peer_addr: "{{ bgp_peer_addr }}"
+      remote_as: "{{ bgp_remote_as }}"
+      local_if_name: "{{ if_loopback }}"
+      provider: "{{ cli }}"
+
+  - name: "set bgp neighbor af"
+    ce_bgp_neighbor_af:
+      remote_address: "{{ bgp_peer_addr }}"
+      af_type: ipv4uni
+      provider: "{{ cli }}"
+  
+  - name: "set evpn bgp"
+    ce_evpn_bgp:
+      bgp_instance: "{{ bgp_as_number }}"
+      as_number: "{{ bgp_as_number }}"
+      peer_address: "{{ bgp_peer_addr }}"
+      peer_enable: true
+      advertise_router_type: irb
+      provider: "{{ cli }}"
+
+  - name: "set evpn bgp rr"
+    ce_evpn_bgp_rr:
+      as_number: "{{ bgp_as_number }}"
+      policy_vpn_target: enable
+      provider: "{{ cli }}"
+
+  - name: "set evpn vxlan vni"
+    ce_evpn_bd_vni:
+      bridge_domain_id: "{{ item.bd_id }}"
+      route_distinguisher: "{{ item.distinguisher }}"
+      vpn_target_export: "{{ item.export }}"
+      vpn_target_import: "{{ item.import }}"
+      provider: "{{ cli }}"
+    with_items:
+      - { bd_id: "{{ bd_id1 }}", distinguisher: "{{ route_distinguisher1 }}", export: "{{ vpn_target_export1 }}", import: "{{ vpn_target_import1 }}" }
+      - { bd_id: "{{ bd_id2 }}", distinguisher: "{{ route_distinguisher2 }}", export: "{{ vpn_target_export2 }}", import: "{{ vpn_target_import2 }}" }
+  
+  
+  - name: "create vpn-instance"
+    ce_vrf:
+      vrf: "{{ vpn_instance }}"
+      state: present
+      provider: "{{ cli }}"
+  
+  - name: "create Vbdif interface"
+    ce_interface:
+      interface: "{{ item.vbdif }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { vbdif: "{{ if_vbdif1 }}" }
+      - { vbdif: "{{ if_vbdif2 }}" }
+  
+  - name: "set vpn-instance"
+    ce_vrf_af:
+      evpn: true
+      route_distinguisher: "{{ vpn_route_distinguisher }}"
+      state: present
+      vpn_target_state: present
+      vpn_target_type: import_extcommunity
+      vpn_target_value: "{{ item.vpn_target }}"
+      vrf: "{{ vpn_instance }}"
+      vrf_aftype: v4
+      provider: "{{ cli }}"
+    with_items:
+      - { vpn_target: "{{ vpn_target1 }}" }
+      - { vpn_target: "{{ vpn_target2 }}" }
+ 
+  - name: "set vxlan gateway"
+    ce_vxlan_gateway:
+      vpn_vni: "{{ vpn_vni }}"
+      vpn_instance: "{{ vpn_instance }}"
+      vbdif_bind_vpn: "{{ vpn_instance }}"
+      vbdif_name: "{{ item.vbdif }}"
+      arp_distribute_gateway: enable
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { vbdif: "{{ if_vbdif1 }}" }
+      - { vbdif: "{{ if_vbdif2 }}" }
+  
+  - name: "set Vbdif ip address"
+    ce_ip_interface:
+      interface: "{{ item.vbdif }}"
+      addr: "{{ item.addr }}"
+      mask: "{{ item.mask }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { vbdif: "{{ if_vbdif1 }}", addr: "{{ if_vbdif1_addr }}", mask: "{{ if_vbdif1_mask }}" }
+      - { vbdif: "{{ if_vbdif2 }}", addr: "{{ if_vbdif2_addr }}", mask: "{{ if_vbdif2_mask }}" }
+  
+  - name: "set arp collect host enable"
+    ce_vxlan_arp:
+      arp_collect_host: enable
+      vbdif_name: "{{ item.vbdif }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { vbdif: "{{ if_vbdif1 }}" }
+      - { vbdif: "{{ if_vbdif2 }}" }
+  
+  

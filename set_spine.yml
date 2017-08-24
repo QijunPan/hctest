@@ -1,0 +1,49 @@
+---
+
+- name: config spine
+  hosts: spine
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
+  tasks:
+  - name: "set interface layer3"
+    ce_interface:
+      interface: "{{ item.interface }}"
+      mode: "{{ item.mode }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { interface: '10GE1/0/1', mode: 'layer3'  }
+      - { interface: '10GE1/0/2', mode: 'layer3'  }
+
+  - name: "set interface ip address"
+    ce_ip_interface:
+      interface: "{{ item.interface }}"
+      addr: "{{ item.addr }}"
+      mask: "{{ item.mask }}"
+      state: present
+      version: v4
+      provider: "{{ cli }}"
+    with_items:
+      - { interface: '10GE1/0/1', addr: '199.1.1.1', mask: 24  }
+      - { interface: '10GE1/0/2', addr: '199.1.2.1', mask: 24  }
+  
+  - name: "set ospf 1"
+    ce_ospf:
+      process_id: 1
+      area: 0.0.0.0 
+      addr: "{{ item.addr }}"
+      mask: "{{ item.mask }}"
+      state: present
+      provider: "{{ cli }}"
+    with_items:
+      - { addr: '199.1.1.0', mask: 24 }
+      - { addr: '199.1.2.0', mask: 24 }
+  

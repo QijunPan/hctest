@@ -1,0 +1,32 @@
+---
+
+- name: clear spine
+  hosts: spine
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
+  tasks:
+  - name: "clear interface configuration"
+    ce_config:
+      lines: "interface {{ item.interface }},clear configuration this"
+      match: none
+      provider: "{{ cli }}"
+    with_items:
+      - { interface: '10GE1/0/1' }
+      - { interface: '10GE1/0/2' }
+    ignore_errors: true
+
+  - name: "delete ospf 1"
+    ce_config:
+      lines: "undo ospf 1"
+      match: none
+      provider: "{{ cli }}"
+    ignore_errors: true
+  

@@ -1,0 +1,38 @@
+---
+
+- name: clean leaf
+  hosts: leaf
+  connection: local
+  gather_facts: no
+  vars:
+    cli:
+      host: "{{ inventory_hostname }}"
+      port: "{{ ansible_ssh_port }}"
+      username: "{{ username }}"
+      password: "{{ password }}"
+      transport: cli
+
+  tasks:
+
+  - name: "clear config of evpn"
+    ce_config:
+      lines: "{{ item.cmd }}"
+      match: "none"
+      provider: "{{ cli }}"
+    ignore_errors: true
+    with_items:
+      - { cmd: "undo ospf 1" }
+      - { cmd: "undo bgp {{ bgp_as_number }}" }
+      - { cmd: "undo interface {{ if_nve }}" }
+      - { cmd: "undo interface {{ if_loopback }}" }
+      - { cmd: "undo interface {{ if_l2sub1 }}" }
+      - { cmd: "undo interface {{ if_l2sub2 }}" }
+      - { cmd: "interface {{ if2spine }},clear configuration this" }
+      - { cmd: "undo interface {{ if_vbdif1 }}" }
+      - { cmd: "undo interface {{ if_vbdif2 }}" }
+      - { cmd: "undo bridge-domain {{ bd_id1 }}" }
+      - { cmd: "undo bridge-domain {{ bd_id2 }}" }
+      - { cmd: "undo ip vpn-instance {{ vpn_instance }}" }
+      - { cmd: "undo evpn-overlay enable" }
+
+  
