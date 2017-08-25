@@ -29,6 +29,27 @@
       version: v4
       provider: "{{ cli }}"
   
+  - name: "crate eth-trunk"
+    ce_interface:
+      interface: "Eth-Trunk{{ if_ethtrunk_id }}"
+      state: present
+      provider: "{{ cli }}"
+      
+  - name: "set eth-trunk member"
+    ce_eth_trunk:
+      trunk_id: "{{ if_ethtrunk_id }}"
+      members: "{{ if_ethtrunk_members }}"
+      force: true
+      state: present
+      provider: "{{ cli }}"
+  
+  - name: "set eth-trunk service type tunnel"
+    ce_config:
+      lines: "interface Eth-Trunk{{ if_ethtrunk_id }},service type tunnel"
+      match: none
+      state: present
+      provider: "{{ cli }}"
+      
   - name: "create loopback interface"
     ce_interface:
       interface: "{{ if_loopback }}"
@@ -193,12 +214,13 @@
       vpn_instance: "{{ vpn_instance }}"
       vbdif_bind_vpn: "{{ vpn_instance }}"
       vbdif_name: "{{ item.vbdif }}"
+      vbdif_mac: "{{ item.mac }}"
       arp_distribute_gateway: enable
       state: present
       provider: "{{ cli }}"
     with_items:
-      - { vbdif: "{{ if_vbdif1 }}" }
-      - { vbdif: "{{ if_vbdif2 }}" }
+      - { vbdif: "{{ if_vbdif1 }}",mac: "{{ if_vbdif1_mac }}" }
+      - { vbdif: "{{ if_vbdif2 }}",mac: "{{ if_vbdif2_mac }}" }
   
   - name: "set Vbdif ip address"
     ce_ip_interface:

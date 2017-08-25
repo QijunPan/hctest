@@ -1,0 +1,4 @@
+if_vbdif1_mac=000-5e00-0100
+if_vbdif2_mac=000-5e00-0101
+if_ethtrunk_id=100
+if_ethtrunk_members=10GE1/0/41
