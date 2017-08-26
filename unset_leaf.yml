@@ -34,7 +34,7 @@
       - { cmd: "undo bridge-domain {{ bd_id2 }}" }
       - { cmd: "undo ip vpn-instance {{ vpn_instance }}" }
       - { cmd: "undo evpn-overlay enable" }
-      - { cmd: "interface {{ if_ethtrunk_members }},chear configuration this" }
+      - { cmd: "interface {{ if_ethtrunk_members }},clear configuration this" }
       - { cmd: "undo interface Eth-Trunk{{ if_ethtrunk_id }}" }
 
   

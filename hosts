@@ -1,0 +1,186 @@
+# This is the default ansible 'hosts' file.
+#
+# It should live in /etc/ansible/hosts
+#
+#   - Comments begin with the '#' character
+#   - Blank lines are ignored
+#   - Groups of hosts are delimited by [header] elements
+#   - You can enter hostnames or ip addresses
+#   - A hostname/ip can be a member of multiple groups
+
+# Ex 1: Ungrouped hosts, specify before any group headers.
+
+## green.example.com
+## blue.example.com
+## 192.168.100.1
+## 192.168.100.10
+
+# Ex 2: A collection of hosts belonging to the 'webservers' group
+
+## [webservers]
+## alpha.example.org
+## beta.example.org
+## 192.168.1.100
+## 192.168.1.110
+
+# If you have multiple hosts following a pattern you can specify
+# them like this:
+
+## www[001:006].example.com
+
+# Ex 3: A collection of database servers in the 'dbservers' group
+
+## [dbservers]
+## 
+## db01.intranet.mydomain.net
+## db02.intranet.mydomain.net
+## 10.25.1.56
+## 10.25.1.57
+
+# Here's another example of host ranges, this time there are no
+# leading 0s:
+
+## db-[99:101]-node.example.com
+
+[all:vars]
+ansible_connection=local
+
+[spine]
+192.202.18.101:22 username=ansible password=Admin@123
+
+
+[leaf1]
+192.202.18.102:22
+
+[leaf2]
+192.202.18.103:22
+
+[leaf1:vars]
+#login
+username=ansible
+password=Admin@123
+
+#underlay
+if2spine=10GE1/0/1
+if2spine_addr=199.1.1.2
+if2spine_mask=24
+if_loopback=LoopBack1
+if_loopback_addr=1.1.1.1
+if_loopback_mask=32
+
+#ospf
+ospf_process=1
+ospf_area=0.0.0.0
+ospf_addr1=1.1.1.1
+ospf_addr1_mask=32
+ospf_addr2=199.1.1.0
+ospf_addr2_mask=24
+
+#vxlan
+if_nve=Nve1
+if_nve_source=1.1.1.1
+vni1=10001
+vni2=10002
+bd_id1=10
+bd_id2=20
+if_l2sub1=10GE1/0/2.100
+if_l2sub1_encap=dot1q
+if_l2sub1_cvid=100
+if_l2sub2=10GE1/0/2.200
+if_l2sub2_encap=dot1q
+if_l2sub2_cvid=200
+route_distinguisher1=1:100
+vpn_target_export1=1:1,10:10
+vpn_target_import1=1:1
+route_distinguisher2=2:100
+vpn_target_export2=2:2,20:20
+vpn_target_import2=2:2
+vpn_instance=vpn1
+vpn_route_distinguisher=100:1
+vpn_target1=10:11
+vpn_target2=20:11
+vpn_vni=1000
+if_vbdif1=Vbdif10
+if_vbdif1_addr=177.1.1.1
+if_vbdif1_mask=24
+if_vbdif2=Vbdif20
+if_vbdif2_addr=177.1.2.1
+if_vbdif2_mask=24
+if_vbdif1_mac=0000-5e00-0100
+if_vbdif2_mac=0000-5e00-0101
+if_ethtrunk_id=100
+if_ethtrunk_members=10GE1/0/41
+
+
+
+#bgp
+bgp_as_number=100
+bgp_peer_addr=2.2.2.2
+bgp_remote_as=100
+
+[leaf2:vars]
+#login
+username=ansible
+password=Admin@123
+
+#underlay
+if2spine=10GE1/0/1
+if2spine_addr=199.1.2.2
+if2spine_mask=24
+if_loopback=LoopBack2
+if_loopback_addr=2.2.2.2
+if_loopback_mask=32
+
+#ospf
+ospf_process=1
+ospf_area=0.0.0.0
+ospf_addr1=2.2.2.2
+ospf_addr1_mask=32
+ospf_addr2=199.1.2.0
+ospf_addr2_mask=24
+
+#vxlan
+if_nve=Nve1
+if_nve_source=2.2.2.2
+vni1=10001
+vni2=10002
+bd_id1=10
+bd_id2=20
+if_l2sub1=10GE1/0/2.100
+if_l2sub1_encap=dot1q
+if_l2sub1_cvid=100
+if_l2sub2=10GE1/0/2.200
+if_l2sub2_encap=dot1q
+if_l2sub2_cvid=200
+route_distinguisher1=1:200
+vpn_target_export1=1:1,10:11
+vpn_target_import1=1:1
+route_distinguisher2=2:200
+vpn_target_export2=2:2,20:11
+vpn_target_import2=2:2
+vpn_instance=vpn2
+vpn_route_distinguisher=200:2
+vpn_target1=10:10
+vpn_target2=20:20
+vpn_vni=1000
+if_vbdif1=Vbdif10
+if_vbdif1_addr=177.1.1.1
+if_vbdif1_mask=24
+if_vbdif2=Vbdif20
+if_vbdif2_addr=177.1.2.1
+if_vbdif2_mask=24
+if_vbdif1_mac=0000-5e00-0100
+if_vbdif2_mac=0000-5e00-0101
+if_ethtrunk_id=100
+if_ethtrunk_members=10GE1/0/41
+
+#bgp
+bgp_as_number=100
+bgp_peer_addr=1.1.1.1
+bgp_remote_as=100
+
+
+
+[leaf:children]
+leaf1
+leaf2

@@ -29,12 +29,12 @@
       version: v4
       provider: "{{ cli }}"
   
-  - name: "crate eth-trunk"
+  - name: "create eth-trunk interface"
     ce_interface:
       interface: "Eth-Trunk{{ if_ethtrunk_id }}"
       state: present
       provider: "{{ cli }}"
-      
+  
   - name: "set eth-trunk member"
     ce_eth_trunk:
       trunk_id: "{{ if_ethtrunk_id }}"
@@ -47,9 +47,8 @@
     ce_config:
       lines: "interface Eth-Trunk{{ if_ethtrunk_id }},service type tunnel"
       match: none
-      state: present
       provider: "{{ cli }}"
-      
+  
   - name: "create loopback interface"
     ce_interface:
       interface: "{{ if_loopback }}"
@@ -219,8 +218,8 @@
       state: present
       provider: "{{ cli }}"
     with_items:
-      - { vbdif: "{{ if_vbdif1 }}",mac: "{{ if_vbdif1_mac }}" }
-      - { vbdif: "{{ if_vbdif2 }}",mac: "{{ if_vbdif2_mac }}" }
+      - { vbdif: "{{ if_vbdif1 }}", mac: "{{ if_vbdif1_mac }}" }
+      - { vbdif: "{{ if_vbdif2 }}", mac: "{{ if_vbdif2_mac }}" }
   
   - name: "set Vbdif ip address"
     ce_ip_interface:
